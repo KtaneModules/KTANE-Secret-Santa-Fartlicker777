@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using Rnd = UnityEngine.Random;
 using KModkit;
 
 public class SecretSanta : MonoBehaviour {
@@ -15,11 +16,22 @@ public class SecretSanta : MonoBehaviour {
    public KMSelectable Sumbit;
    public GameObject[] ResidualHighlights;
 
+   public GameObject[] Presents;
+   public GameObject[] Ribbons;
+   public GameObject[] WholePresent;
+   public Material[] PColors;
+   public Material[] RColors;
+
+   public TextMesh[] PriceTags;
 
    int[] GiftChoice = new int[10];
    int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7};
    string[] PresentColorNames = { "red", "orange", "yellow", "green", "blue", "purple"};
    string[] GiftNames = "Handball (10),Wine Glass,5L of Soda,Foreign Coins,Kickball,Live Chicken,Walkie Talkie,Cookbook,Shoebill,Pipe Bomb,Tortured Soul,Gold Marbles,Toy Piano,Marimba,Discord Nitro".Split(',');
+
+   int[] GiftPrices = new int[6];
+
+   int[] FinalPrices = new int[6];
 
    bool Activated;
 
@@ -62,7 +74,6 @@ public class SecretSanta : MonoBehaviour {
 
       ShuffleData ThisShuffle = new ShuffleData();
       GiftData ThisData = new GiftData();
-      DisplayGifts ThisDisplay = new DisplayGifts();
 
       int[] GiftChoice = ThisShuffle.Shuf[0].GetGiftChoice();
       for (int i = 0; i < 6; i++) {
@@ -73,7 +84,7 @@ public class SecretSanta : MonoBehaviour {
          if (temp == 0) {
             temp = -3;
          }
-         else if (temp == 2) {   //Gets the direction to move in the table. Numbers are converted to actual directions here.
+         else if (temp == 2) {
             temp = 3;
          }
          else if (temp == 3) {
@@ -88,7 +99,7 @@ public class SecretSanta : MonoBehaviour {
             case 9:
             case 13:
                val = RevDig(val);
-               break;         //Table for the value modifiers
+               break;
             case 2:
                val = Avg(val);
                break;
@@ -122,7 +133,7 @@ public class SecretSanta : MonoBehaviour {
          val = ThisData.Gift[GiftChoice[i]].GetValue();
          int T = GiftColorsToNumbers[ThisShuffle.Shuf[0].GetGiftColors()[i]] + DigRoot(val);
 
-         if ((val < 45 && val - T >= 10) || (val >= 45 && val + T > 99)) { //Last table where you add/subtract T
+         if ((val < 45 && val - T >= 10) || (val >= 45 && val + T > 99)) {
             val -= T;
          }
          else {
@@ -131,15 +142,50 @@ public class SecretSanta : MonoBehaviour {
 
          Debug.LogFormat("[Secret Santa #{0}] Its final value is {1}.", ModuleId, val);
          ThisData.Gift[GiftChoice[i]].SetValue(val);
+         GiftPrices[i] = ThisData.Gift[GiftChoice[i]].GetValue();
       }
+
       this.GiftChoice = ThisShuffle.Shuf[0].GetGiftChoice();
-      ThisDisplay.ColorRibbonsAndGifts(ThisShuffle.Shuf[0].GetGiftColors(), ThisData);
+
+      for (int i = 0; i < 6; i++) {
+         Presents[i].GetComponent<MeshRenderer>().material = PColors[ThisShuffle.Shuf[0].GetGiftColors()[i]];
+         Ribbons[i].GetComponent<MeshRenderer>().material = RColors[ThisData.Gift[ThisShuffle.Shuf[0].GetGiftChoice()[i]].GetRibbon()];
+      }
+
+      foreach (GameObject Gift in WholePresent) {
+         Gift.transform.Rotate(0, Rnd.Range(0, 90f), 0);
+      }
+
+      GeneratePrices();
+   }
+
+   void GeneratePrices() {
+      BubbleSort(GiftPrices);
+
+      int floor = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1] + 1);
+      int ceil = Rnd.Range(GiftPrices[4], GiftPrices[5] + 1);
+   }
+
+   void BubbleSort (int[] arr) {
+      bool HasSwapped = false;
+      int temp = 0;
+      for (int i = 0; i < arr.Length - 1; i++) {
+         if (arr[i] > arr[i + 1]) {
+            temp = arr[i + 1];
+            arr[i + 1] = arr[i];
+            arr[i] = temp;
+            HasSwapped = true;
+         }
+      }
+      if (HasSwapped) {
+         BubbleSort(arr);
+      }
    }
 
    #region Table 2 Methods
 
    int RevDig (int input) {
-      return input / 10 + input % 10;
+      return input / 10 + input % 10 * 10;
    }
 
    int Avg (int input) {

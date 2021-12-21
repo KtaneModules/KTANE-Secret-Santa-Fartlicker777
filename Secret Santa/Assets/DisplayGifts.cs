@@ -1,17 +1,10 @@
-﻿using UnityEngine;
+﻿/*using UnityEngine;
+using System.Collections.Generic;
 using Rnd = UnityEngine.Random;
 
 public class DisplayGifts : MonoBehaviour {
 
-   public GameObject[] Presents;
-   public GameObject[] Ribbons;
    public GameObject[] WholePresent;
-   public Material[] PColors;
-   public Material[] RColors;
-
-   void Start () {
-      RotateGifts();
-   }
 
    // Use this for initialization
    public void RotateGifts () {
@@ -20,11 +13,17 @@ public class DisplayGifts : MonoBehaviour {
       }
    }
 
-   // Update is called once per frame
-   public void ColorRibbonsAndGifts (int[] GColors, GiftData ThisData) {
+   // Threw a bunch of errors for no fucking reason, so I moved it to the main script
+   /*public void ColorRibbonsAndGifts (ShuffleData ThisShuffle, GiftData ThisData) {
       for (int i = 0; i < 6; i++) {
-         Presents[i].GetComponent<MeshRenderer>().material = PColors[GColors[i]];
-         Ribbons[i].GetComponent<MeshRenderer>().material = RColors[ThisData.Gift[GColors[i]].GetRibbon()];
+         Presents[i].GetComponent<MeshRenderer>().material = PColors[ThisShuffle.Shuf[0].GetGiftColors()[i]];
+         Ribbons[i].GetComponent<MeshRenderer>().material = RColors[ThisData.Gift[ThisShuffle.Shuf[0].GetGiftChoice()[i]].GetRibbon()];
       }
    }
 }
+
+public class CreateDisplayer {
+   public readonly List<DisplayGifts> Why = new List<DisplayGifts> {
+      new DisplayGifts()
+   };
+}*/
