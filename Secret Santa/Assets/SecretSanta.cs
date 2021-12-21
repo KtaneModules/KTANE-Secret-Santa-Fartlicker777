@@ -163,7 +163,7 @@ public class SecretSanta : MonoBehaviour {
       BubbleSort(GiftPrices);
 
       int floor = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1] + 1);
-      int ceil = Rnd.Range(GiftPrices[4], GiftPrices[5] + 1);
+      int ceil = Rnd.Range(GiftPrices[4], GiftPrices[5]);
    }
 
    void BubbleSort (int[] arr) {
