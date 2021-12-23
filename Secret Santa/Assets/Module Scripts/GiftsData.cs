@@ -65,7 +65,7 @@ public class GiftData {
 
    new GiftsClass ("Pipe Bomb", 55, new int[] {3}),
    new GiftsClass ("Tortured Soul", 59),
-   new GiftsClass ("Gold Marbles", 73, new int[] { 0, 3}),
+   new GiftsClass ("Gold Marbles", 73, new int[] {1}),
 
    new GiftsClass ("Toy Piano", 79, new int[] {2, 3}),
    new GiftsClass ("Marimba", 80, new int[] {2}),

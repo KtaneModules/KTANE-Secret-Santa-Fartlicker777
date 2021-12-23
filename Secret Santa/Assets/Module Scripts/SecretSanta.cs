@@ -24,6 +24,8 @@ public class SecretSanta : MonoBehaviour {
 
    public TextMesh[] PriceTags;
 
+   IsRotating GetRotate = new IsRotating();
+
    int[] GiftChoice = new int[10];
    int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7};
    string[] PresentColorNames = { "red", "orange", "yellow", "green", "blue", "purple"};
@@ -32,8 +34,15 @@ public class SecretSanta : MonoBehaviour {
    int[] GiftPrices = new int[6];
 
    int[] FinalPrices = new int[6];
+   int Solution;
 
-   bool Activated;
+   bool[] CurrentSelected = new bool[6];
+   bool Selected;
+   bool IsRot;
+   bool IsPlaying;
+
+   KMSelectable GiftThatWillSound;
+   string SoundThatWillPlay;
 
    static int ModuleIdCounter = 1;
    int ModuleId;
@@ -51,19 +60,61 @@ public class SecretSanta : MonoBehaviour {
    }
 
    void SumbitPress () {
-
+      Sumbit.AddInteractionPunch();
+      Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Sumbit.transform);
+      if (ModuleSolved) {
+         return;
+      }
+      for (int i = 0; i < 6; i++) {
+         if (CurrentSelected[i]) {
+            if (Solution == i) {
+               GetComponent<KMBombModule>().HandlePass();
+               ModuleSolved = true;
+               return;
+            }
+         }
+      }
+      GetComponent<KMBombModule>().HandleStrike();
    }
 
    void GiftPress (KMSelectable Gift) {
       for (int i = 0; i < 6; i++) {
          if (Gift == Gifts[i]) {
-            Audio.PlaySoundAtTransform(GiftNames[GiftChoice[i]], this.transform);
-            foreach (GameObject H in ResidualHighlights) {
-               H.SetActive(false);
+            IsPlaying = false;
+            if (CurrentSelected[i]) {
+               Selected = false;
+               for (int j = 0; j < 6; j++) {
+                  CurrentSelected[j] = false;
+                  ResidualHighlights[j].SetActive(false);
+               }
             }
-            ResidualHighlights[i].SetActive(true);
+            else {
+               Selected = true;
+               GiftThatWillSound = Gift;
+               SoundThatWillPlay = GiftNames[GiftChoice[i]];
+               for (int j = 0; j < 6; j++) {
+                  CurrentSelected[j] = false;
+                  ResidualHighlights[j].SetActive(false);
+               }
+               ResidualHighlights[i].SetActive(true);
+               CurrentSelected[i] = true;
+            }
          }
       }
+   }
+
+   void Update () {
+      IsRot = GetRotate.GetIsRot();
+      if (Selected && IsRot && !IsPlaying) {
+         StartCoroutine(PlayGiftSound());
+      }
+   }
+
+   IEnumerator PlayGiftSound () {
+      IsPlaying = true;
+      Audio.PlaySoundAtTransform(SoundThatWillPlay, GiftThatWillSound.transform);
+      yield return new WaitForSecondsRealtime(.2f);
+      IsPlaying = false;
    }
 
    void Start () {
@@ -162,9 +213,57 @@ public class SecretSanta : MonoBehaviour {
    void GeneratePrices() {
       BubbleSort(GiftPrices);
 
-      int floor = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1] + 1);
+      int floor = Rnd.Range(GiftPrices[0], GiftPrices[1]);
       int ceil = Rnd.Range(GiftPrices[4], GiftPrices[5]);
+
+      bool CeilOrFloor = Rnd.Range(0, 2) == 0; //Floor is false when 0
+
+      Debug.LogFormat("[Secret Santa #{0}] The {1} value is disregarded.", ModuleId, CeilOrFloor ? "floor" : "ceiling");
+
+      if (CeilOrFloor) {           //Floor is false
+         FinalPrices[0] = Rnd.Range(10, GiftPrices[0]);
+         FinalPrices[1] = Rnd.Range(10, GiftPrices[0]);
+         for (int i = 2; i < 5; i++) {
+            FinalPrices[i] = Rnd.Range(10, ceil);
+         }
+         FinalPrices[5] = Rnd.Range(ceil + 1, 100);
+      }
+      else {                      //Ceil is false
+         FinalPrices[0] = Rnd.Range(GiftPrices[5] + 1, 100);
+         FinalPrices[1] = Rnd.Range(GiftPrices[5] + 1, 100);
+         for (int i = 2; i < 5; i++) {
+            FinalPrices[i] = Rnd.Range(floor, 100);
+         }
+         FinalPrices[5] = Rnd.Range(10, floor);
+      }
+
+      FinalPrices.Shuffle();
+      Debug.LogFormat("[Secret Santa #{0}] Final prices are ${1}, ${2}, ${3}, ${4}, ${5}, ${6}.", ModuleId, FinalPrices[0], FinalPrices[1], FinalPrices[2], FinalPrices[3], FinalPrices[4], FinalPrices[5]);
+      for (int i = 0; i < 12; i += 2) {
+         PriceTags[i].text = "$" + FinalPrices[i / 2].ToString();
+         PriceTags[i + 1].text = "$" + FinalPrices[i / 2].ToString();
+      }
+
+      int maxVal = FinalPrices[0];
+      if (CeilOrFloor) {
+         for (int i = 1; i < 6; i++) {
+            if (FinalPrices[i] > maxVal) {
+               maxVal = FinalPrices[i];
+               Solution = i;
+            }
+         }
+      }
+      else {
+         for (int i = 1; i < 6; i++) {
+            if (FinalPrices[i] < maxVal) {
+               maxVal = FinalPrices[i];
+               Solution = i;
+            }
+         }
+      }
    }
+
+   #region Misc Methods
 
    void BubbleSort (int[] arr) {
       bool HasSwapped = false;
@@ -182,8 +281,6 @@ public class SecretSanta : MonoBehaviour {
       }
    }
 
-   #region Table 2 Methods
-
    int RevDig (int input) {
       return input / 10 + input % 10 * 10;
    }
@@ -197,4 +294,36 @@ public class SecretSanta : MonoBehaviour {
    }
 
    #endregion
+
+#pragma warning disable 414
+   private readonly string TwitchHelpMessage = @"Use !{0} TL to press that gift. Use !{0} submit to submit your selection.";
+#pragma warning restore 414
+
+   IEnumerator ProcessTwitchCommand (string Command) {
+      Command = Command.Trim().ToUpperInvariant();
+      string[] Positions = { "ML", "TL", "TR", "MR", "BR", "BL" };
+      yield return null;
+      if (!Positions.Contains(Command) && Command != "SUBMIT") {
+         yield return "sendtochaterror I don't understand!";
+      }
+      else {
+         if (Positions.Contains(Command)) {
+            Gifts[Array.IndexOf(Positions, Command)].OnInteract();
+         }
+         else {
+            Sumbit.OnInteract();
+         }
+      }
+   }
+
+   IEnumerator TwitchHandleForcedSolve () {
+      string[] Positions = { "ML", "TL", "TR", "MR", "BR", "BL" };
+      if (!Selected) {
+         yield return ProcessTwitchCommand(Positions[Solution]);
+      }
+      if (Array.IndexOf(Gifts, GiftThatWillSound) != Solution) {
+         yield return ProcessTwitchCommand(Positions[Solution]);
+      }
+      Sumbit.OnInteract();
+   }
 }
