@@ -27,8 +27,8 @@ public class SecretSanta : MonoBehaviour {
    IsRotating GetRotate = new IsRotating();
 
    int[] GiftChoice = new int[10];
-   int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7};
-   string[] PresentColorNames = { "red", "orange", "yellow", "green", "blue", "purple"};
+   int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7 };
+   string[] PresentColorNames = { "red", "orange", "yellow", "green", "blue", "purple" };
    string[] GiftNames = "Handball (10),Wine Glass,5L of Soda,Foreign Coins,Kickball,Live Chicken,Walkie Talkie,Cookbook,Shoebill,Pipe Bomb,Tortured Soul,Gold Marbles,Toy Piano,Marimba,Discord Nitro".Split(',');
 
    int[] GiftPrices = new int[6];
@@ -52,7 +52,7 @@ public class SecretSanta : MonoBehaviour {
       ModuleId = ModuleIdCounter++;
 
       foreach (KMSelectable Gift in Gifts) {
-          Gift.OnInteract += delegate () { GiftPress(Gift); return false; };
+         Gift.OnInteract += delegate () { GiftPress(Gift); return false; };
       }
 
       Sumbit.OnInteract += delegate () { SumbitPress(); return false; };
@@ -130,7 +130,7 @@ public class SecretSanta : MonoBehaviour {
       for (int i = 0; i < 6; i++) {
          Debug.LogFormat("[Secret Santa #{0}] Gift {1} is colored {2}.", ModuleId, i + 1, PresentColorNames[ThisShuffle.Shuf[0].GetGiftColors()[i]]);
          int temp = ThisData.Gift[GiftChoice[i]].GetRibbon();
-         Debug.LogFormat("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver"}[temp]);
+         Debug.LogFormat("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver" }[temp]);
          Debug.LogFormat("[Secret Santa #{0}] Its internal gift is {1}.", ModuleId, GiftNames[GiftChoice[i]]);
          if (temp == 0) {
             temp = -3;
@@ -210,31 +210,22 @@ public class SecretSanta : MonoBehaviour {
       GeneratePrices();
    }
 
-   void GeneratePrices() {
+   void GeneratePrices () {
       BubbleSort(GiftPrices);
 
-      int floor = Rnd.Range(GiftPrices[0], GiftPrices[1]);
-      int ceil = Rnd.Range(GiftPrices[4], GiftPrices[5]);
+      bool CeilOrFloor = Rnd.Range(0, 2) == 0; //Chooses between top two or bottom two
 
-      bool CeilOrFloor = Rnd.Range(0, 2) == 0; //Floor is false when 0
+      Debug.LogFormat("[Secret Santa #{0}] The correct value is {1}.", ModuleId, CeilOrFloor ? "above the ceiling price" : "beneath the floor price");
 
-      Debug.LogFormat("[Secret Santa #{0}] The {1} value is disregarded.", ModuleId, CeilOrFloor ? "floor" : "ceiling");
-
-      if (CeilOrFloor) {           //Floor is false
-         FinalPrices[0] = Rnd.Range(10, GiftPrices[0]);
-         FinalPrices[1] = Rnd.Range(10, GiftPrices[0]);
-         for (int i = 2; i < 5; i++) {
-            FinalPrices[i] = Rnd.Range(10, ceil);
-         }
-         FinalPrices[5] = Rnd.Range(ceil + 1, 100);
+      for (int i = 0; i < 5; i++) {
+         FinalPrices[i] = Rnd.Range(GiftPrices[1], GiftPrices[4]);
       }
-      else {                      //Ceil is false
-         FinalPrices[0] = Rnd.Range(GiftPrices[5] + 1, 100);
-         FinalPrices[1] = Rnd.Range(GiftPrices[5] + 1, 100);
-         for (int i = 2; i < 5; i++) {
-            FinalPrices[i] = Rnd.Range(floor, 100);
-         }
-         FinalPrices[5] = Rnd.Range(10, floor);
+
+      if (CeilOrFloor) {
+         FinalPrices[5] = Rnd.Range(GiftPrices[4] + 1, GiftPrices[5]);
+      }
+      else {
+         FinalPrices[5] = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1]);
       }
 
       FinalPrices.Shuffle();
@@ -244,21 +235,10 @@ public class SecretSanta : MonoBehaviour {
          PriceTags[i + 1].text = "$" + FinalPrices[i / 2].ToString();
       }
 
-      int maxVal = FinalPrices[0];
-      if (CeilOrFloor) {
-         for (int i = 1; i < 6; i++) {
-            if (FinalPrices[i] > maxVal) {
-               maxVal = FinalPrices[i];
-               Solution = i;
-            }
-         }
-      }
-      else {
-         for (int i = 1; i < 6; i++) {
-            if (FinalPrices[i] < maxVal) {
-               maxVal = FinalPrices[i];
-               Solution = i;
-            }
+      for (int i = 0; i < 6; i++) {
+         if (FinalPrices[i] > GiftPrices[4] || FinalPrices[i] < GiftPrices[1]) {
+            Solution = i;
+            return;
          }
       }
    }
