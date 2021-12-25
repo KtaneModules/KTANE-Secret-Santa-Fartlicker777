@@ -218,7 +218,11 @@ public class SecretSanta : MonoBehaviour {
       Debug.LogFormat("[Secret Santa #{0}] The correct value is {1}.", ModuleId, CeilOrFloor ? "above the ceiling price" : "beneath the floor price");
 
       for (int i = 0; i < 5; i++) {
-         FinalPrices[i] = Rnd.Range(GiftPrices[1], GiftPrices[4]);
+         int temp = 0;
+         do {
+            temp = Rnd.Range(10, 99);
+         } while (GiftPrices.Contains(temp) || (temp > GiftPrices[0] && temp < GiftPrices[1]) || (temp > GiftPrices[4] && temp < GiftPrices[5]) || FinalPrices.Contains(temp));
+         FinalPrices[i] = temp;
       }
 
       if (CeilOrFloor) {
@@ -227,6 +231,8 @@ public class SecretSanta : MonoBehaviour {
       else {
          FinalPrices[5] = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1]);
       }
+
+      Debug.LogFormat("[Secret Santa #{0}] The solution price is ${1}.", ModuleId, FinalPrices[5]);
 
       FinalPrices.Shuffle();
       Debug.LogFormat("[Secret Santa #{0}] Final prices are ${1}, ${2}, ${3}, ${4}, ${5}, ${6}.", ModuleId, FinalPrices[0], FinalPrices[1], FinalPrices[2], FinalPrices[3], FinalPrices[4], FinalPrices[5]);
