@@ -242,7 +242,7 @@ public class SecretSanta : MonoBehaviour {
       }
 
       for (int i = 0; i < 6; i++) {
-         if (FinalPrices[i] > GiftPrices[4] || FinalPrices[i] < GiftPrices[1]) {
+         if ((FinalPrices[i] > GiftPrices[4] && FinalPrices[i] < GiftPrices[5]) || (FinalPrices[i] < GiftPrices[1] && FinalPrices[i] > GiftPrices[0])) {
             Solution = i;
             return;
          }
