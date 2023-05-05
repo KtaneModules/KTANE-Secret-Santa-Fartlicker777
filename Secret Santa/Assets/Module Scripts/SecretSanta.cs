@@ -35,6 +35,16 @@ public class SecretSanta : MonoBehaviour {
 
    int[] FinalPrices = new int[6];
    int Solution;
+   bool InvalidFlag = true;
+
+   string[][] LogLines = new string[][] {
+      new string[] { "", "", "", "", "", "" },
+      new string[] { "", "", "", "", "", "" },
+      new string[] { "", "", "", "", "", "" },
+      new string[] { "", "", "", "", "", "" },
+      new string[] { "", "", "", "", "", "" },
+      new string[] { "", "", "", "", "", "" }
+   };
 
    bool[] CurrentSelected = new bool[6];
    bool Selected;
@@ -118,20 +128,29 @@ public class SecretSanta : MonoBehaviour {
    }
 
    void Start () {
-      Calculate();
+      while (InvalidFlag) {
+         Calculate();
+      }
+
+      for (int p = 0; p < 6; p++) {
+         for (int q = 0; q < 6; q++) {
+            Debug.LogFormat("{0}", LogLines[p][q]);
+         }
+      }
+
+      GeneratePrices();
    }
 
    void Calculate () {
 
       ShuffleData ThisShuffle = new ShuffleData();
       GiftData ThisData = new GiftData();
-
       int[] GiftChoice = ThisShuffle.Shuf[0].GetGiftChoice();
+
       for (int i = 0; i < 6; i++) {
-         Debug.LogFormat("[Secret Santa #{0}] Gift {1} is colored {2}.", ModuleId, i + 1, PresentColorNames[ThisShuffle.Shuf[0].GetGiftColors()[i]]);
+         anus:
          int temp = ThisData.Gift[GiftChoice[i]].GetRibbon();
-         Debug.LogFormat("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver" }[temp]);
-         Debug.LogFormat("[Secret Santa #{0}] Its internal gift is {1}.", ModuleId, GiftNames[GiftChoice[i]]);
+         int oldtemp = temp;
          if (temp == 0) {
             temp = -3;
          }
@@ -142,7 +161,7 @@ public class SecretSanta : MonoBehaviour {
             temp = -1;
          }
          int val = ThisData.Gift[GiftChoice[i]].GetValue();
-         Debug.LogFormat("[Secret Santa #{0}] Its starting value is {1}.", ModuleId, val);
+         int oldval = val;
          switch (GiftChoice[i] + temp) {
             case 0:
             case 4:
@@ -179,7 +198,7 @@ public class SecretSanta : MonoBehaviour {
                val = 100 - val;
                break;
          }
-         Debug.LogFormat("[Secret Santa #{0}] Its new value is {1}.", ModuleId, val);
+         int notasoldval = val;
          ThisData.Gift[GiftChoice[i]].SetValue(val);
          val = ThisData.Gift[GiftChoice[i]].GetValue();
          int T = GiftColorsToNumbers[ThisShuffle.Shuf[0].GetGiftColors()[i]] + DigRoot(val);
@@ -191,23 +210,44 @@ public class SecretSanta : MonoBehaviour {
             val += T;
          }
 
-         Debug.LogFormat("[Secret Santa #{0}] Its final value is {1}.", ModuleId, val);
          ThisData.Gift[GiftChoice[i]].SetValue(val);
          GiftPrices[i] = ThisData.Gift[GiftChoice[i]].GetValue();
+
+         LogLines[i][0] = String.Format("[Secret Santa #{0}] Gift {1} is colored {2}.", ModuleId, i + 1, PresentColorNames[ThisShuffle.Shuf[0].GetGiftColors()[i]]);
+         LogLines[i][1] = String.Format("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver" }[oldtemp]);
+         LogLines[i][2] = String.Format("[Secret Santa #{0}] Its internal gift is {1}.", ModuleId, GiftNames[GiftChoice[i]]);
+         LogLines[i][3] = String.Format("[Secret Santa #{0}] Its starting value is {1}.", ModuleId, oldval);
+         LogLines[i][4] = String.Format("[Secret Santa #{0}] Its new value is {1}.", ModuleId, notasoldval);
+         LogLines[i][5] = String.Format("[Secret Santa #{0}] Its final value is {1}.", ModuleId, val);
+      }
+
+      string[] fvlog = {"", "", "", "", "", ""};
+      for (int k = 0; k < 6; k++) {
+         fvlog[k] = GiftPrices[k].ToString();
+         if (k == 5) {
+            Debug.LogFormat("<Secret Santa #{0}> Potential final values= {1}", ModuleId, fvlog.Join(", "));
+         }
+      }
+      InvalidFlag = false;
+      for (int x = 0; x < 6; x++) {
+         for (int y = 0; y < 6; y++) {
+            if (x == y || InvalidFlag) { continue; }
+            if (GiftPrices[x] == GiftPrices[y]) { InvalidFlag = true; }
+         }
+      }
+
+      if (!InvalidFlag) {
+         for (int i = 0; i < 6; i++) {
+            Presents[i].GetComponent<MeshRenderer>().material = PColors[ThisShuffle.Shuf[0].GetGiftColors()[i]];
+            Ribbons[i].GetComponent<MeshRenderer>().material = RColors[ThisData.Gift[ThisShuffle.Shuf[0].GetGiftChoice()[i]].GetRibbon()];
+         }
+
+         foreach (GameObject Gift in WholePresent) {
+            Gift.transform.Rotate(0, Rnd.Range(0, 90f), 0);
+         }
       }
 
       this.GiftChoice = ThisShuffle.Shuf[0].GetGiftChoice();
-
-      for (int i = 0; i < 6; i++) {
-         Presents[i].GetComponent<MeshRenderer>().material = PColors[ThisShuffle.Shuf[0].GetGiftColors()[i]];
-         Ribbons[i].GetComponent<MeshRenderer>().material = RColors[ThisData.Gift[ThisShuffle.Shuf[0].GetGiftChoice()[i]].GetRibbon()];
-      }
-
-      foreach (GameObject Gift in WholePresent) {
-         Gift.transform.Rotate(0, Rnd.Range(0, 90f), 0);
-      }
-
-      GeneratePrices();
    }
 
    void GeneratePrices () {
