@@ -24,7 +24,7 @@ public class SecretSanta : MonoBehaviour {
 
     public TextMesh[] PriceTags;
 
-    IsRotating GetRotate = new IsRotating();
+    public IsRotating GetRotate;
 
     int[] GiftChoice = new int[10];
     int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7 };
