@@ -30,7 +30,8 @@ public class SecretSanta : MonoBehaviour {
     int[] GiftColorsToNumbers = { 12, 15, 22, 25, 18, 7 };
     static readonly string[] PresentColorNames = { "red", "orange", "yellow", "green", "blue", "purple" },
         GiftNames = "Handball (10),Wine Glass,5L of Soda,Foreign Coins,Kickball,Live Chicken,Walkie Talkie,Cookbook,Shoebill,Pipe Bomb,Tortured Soul,Gold Marbles,Toy Piano,Marimba,Discord Nitro".Split(','),
-        Positions = new[] { "ML", "TL", "TR", "MR", "BR", "BL" };
+        Positions = new[] { "ML", "TL", "TR", "MR", "BR", "BL" },
+        RibbonColors = new string[] { "gold", "white", "bronze", "silver" };
 
     int[] GiftPrices = new int[6];
 
@@ -231,7 +232,7 @@ public class SecretSanta : MonoBehaviour {
             ThisData.Gift[GiftChoice[i]].SetValue(val);
             GiftPrices[i] = ThisData.Gift[GiftChoice[i]].GetValue();
             LogLines[i][0] = string.Format("[Secret Santa #{0}] The {1} gift is colored {2}.", ModuleId, Positions[i], PresentColorNames[GiftColors[i]]);
-            LogLines[i][1] = string.Format("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver" }[oldtemp]);
+            LogLines[i][1] = string.Format("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, RibbonColors[oldtemp]);
             LogLines[i][2] = string.Format("[Secret Santa #{0}] Its internal gift is {1}.", ModuleId, GiftNames[GiftChoice[i]]);
             LogLines[i][3] = string.Format("[Secret Santa #{0}] Its starting value is {1}.", ModuleId, oldval);
             LogLines[i][4] = string.Format("[Secret Santa #{0}] Its new value is {1}.", ModuleId, notasoldval);
@@ -262,8 +263,8 @@ public class SecretSanta : MonoBehaviour {
         Debug.LogFormat("[Secret Santa #{0}] Final prices are {1}.", ModuleId, FinalPrices.Select(a => a.ToString("$00")).Join(", "));
         for (int i = 0; i < 12; i += 2)
         {
-            PriceTags[i].text = "$" + FinalPrices[i / 2].ToString();
-            PriceTags[i + 1].text = "$" + FinalPrices[i / 2].ToString();
+            PriceTags[i].text = string.Format("${0}", FinalPrices[i / 2].ToString());
+            PriceTags[i + 1].text = string.Format("${0}", FinalPrices[i / 2].ToString());
         }
 
         for (int i = 0; i < 6; i++)
@@ -287,14 +288,17 @@ public class SecretSanta : MonoBehaviour {
             //anus:
             int temp = ThisData.Gift[GiftChoice[i]].GetRibbon();
             int oldtemp = temp;
-            if (temp == 0) {
-            temp = -3;
-            }
-            else if (temp == 2) {
-            temp = 3;
-            }
-            else if (temp == 3) {
-            temp = -1;
+            switch (temp)
+            {
+                case 0:
+                    temp = -3;
+                    break;
+                case 2:
+                    temp = 3;
+                    break;
+                case 3:
+                    temp = -1;
+                    break;
             }
             int val = ThisData.Gift[GiftChoice[i]].GetValue();
             int oldval = val;
@@ -350,20 +354,18 @@ public class SecretSanta : MonoBehaviour {
             GiftPrices[i] = ThisData.Gift[GiftChoice[i]].GetValue();
 
             LogLines[i][0] = string.Format("[Secret Santa #{0}] The {1} gift is colored {2}.", ModuleId, Positions[i], PresentColorNames[ThisShuffle.Shuf[0].GetGiftColors()[i]]);
-            LogLines[i][1] = string.Format("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, new string[] { "gold", "white", "bronze", "silver" }[oldtemp]);
+            LogLines[i][1] = string.Format("[Secret Santa #{0}] Its ribbon is colored {1}.", ModuleId, RibbonColors[oldtemp]);
             LogLines[i][2] = string.Format("[Secret Santa #{0}] Its internal gift is {1}.", ModuleId, GiftNames[GiftChoice[i]]);
             LogLines[i][3] = string.Format("[Secret Santa #{0}] Its starting value is {1}.", ModuleId, oldval);
-            LogLines[i][4] = string.Format("[Secret Santa #{0}] Its new value is {1}.", ModuleId, notasoldval);
-            LogLines[i][5] = string.Format("[Secret Santa #{0}] Its final value is {1}.", ModuleId, val);
+            LogLines[i][4] = string.Format("[Secret Santa #{0}] After applying the function in the direction, based on the ribbon color, its new value is {1}.", ModuleId, notasoldval);
+            LogLines[i][5] = string.Format("[Secret Santa #{0}] Its final value after adjustments is {1}.", ModuleId, val);
         }
 
         string[] fvlog = {"", "", "", "", "", ""};
         for (int k = 0; k < 6; k++) {
             fvlog[k] = GiftPrices[k].ToString();
-            if (k == 5) {
-            Debug.LogFormat("<Secret Santa #{0}> Potential final values= {1}", ModuleId, fvlog.Join(", "));
-            }
         }
+        Debug.LogFormat("<Secret Santa #{0}> Potential final values= {1}", ModuleId, fvlog.Join(", "));
         InvalidFlag = false;
         for (int x = 0; x < 6; x++) {
             for (int y = 0; y < 6; y++) {
@@ -387,8 +389,9 @@ public class SecretSanta : MonoBehaviour {
     }
 
     void GeneratePrices () {
+        
         BubbleSort(GiftPrices);
-
+        //GiftPrices = GiftPrices.OrderBy(a => a).ToArray();
         bool CeilOrFloor = Rnd.Range(0, 2) == 0; //Chooses between top two or bottom two
 
         Debug.LogFormat("[Secret Santa #{0}] The correct value is {1}.", ModuleId, CeilOrFloor ? "above the ceiling price" : "beneath the floor price");
@@ -411,10 +414,10 @@ public class SecretSanta : MonoBehaviour {
         Debug.LogFormat("[Secret Santa #{0}] The solution price is ${1}.", ModuleId, FinalPrices[5]);
 
         FinalPrices.Shuffle();
-        Debug.LogFormat("[Secret Santa #{0}] Final prices are {1}.", ModuleId, FinalPrices.Select(a => a.ToString("$00")).Join(", "));
+        Debug.LogFormat("[Secret Santa #{0}] Displayed prices from the ML present and going CW are {1}.", ModuleId, FinalPrices.Select(a => a.ToString("$00")).Join(", "));
         for (int i = 0; i < 12; i += 2) {
-            PriceTags[i].text = "$" + FinalPrices[i / 2].ToString();
-            PriceTags[i + 1].text = "$" + FinalPrices[i / 2].ToString();
+            PriceTags[i].text = string.Format("${0}", FinalPrices[i / 2].ToString());
+            PriceTags[i + 1].text = string.Format( "${0}", FinalPrices[i / 2].ToString());
         }
 
         for (int i = 0; i < 6; i++) {
@@ -459,7 +462,7 @@ public class SecretSanta : MonoBehaviour {
     #endregion
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"Use !{0} TL to press that gift. Use !{0} submit to submit your selection.";
+    private readonly string TwitchHelpMessage = "Use \"!{0} TL\" to press the top-left gift. Possible gifts are ML, TL, TR, MR, BR, BL. Use \"!{0} submit\" to submit your selection.";
 #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand (string Command) {
