@@ -260,7 +260,7 @@ public class SecretSanta : MonoBehaviour {
 
         Debug.LogFormat("[Secret Santa #{0}] The solution price is ${1}.", ModuleId, FinalPrices[5]);
         FinalPrices = new int[] { 22, 33, 11, 15, 42, 41 };
-        Debug.LogFormat("[Secret Santa #{0}] Final prices are {1}.", ModuleId, FinalPrices.Select(a => a.ToString("$00")).Join(", "));
+        Debug.LogFormat("[Secret Santa #{0}] Displayed prices from the ML present and going CW are {1}.", ModuleId, FinalPrices.Select(a => a.ToString("$00")).Join(", "));
         for (int i = 0; i < 12; i += 2)
         {
             PriceTags[i].text = string.Format("${0}", FinalPrices[i / 2].ToString());
