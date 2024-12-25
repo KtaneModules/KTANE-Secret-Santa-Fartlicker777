@@ -395,21 +395,26 @@ public class SecretSanta : MonoBehaviour {
         bool CeilOrFloor = Rnd.Range(0, 2) == 0; //Chooses between top two or bottom two
 
         Debug.LogFormat("[Secret Santa #{0}] The correct value is {1}.", ModuleId, CeilOrFloor ? "above the ceiling price" : "beneath the floor price");
-
-        for (int i = 0; i < 5; i++) {
+    retryGen:
+        var targetPrice = CeilOrFloor ? Rnd.Range(GiftPrices[4] + 1, GiftPrices[5]) : Rnd.Range(GiftPrices[0] + 1, GiftPrices[1]);
+        // Ceil: 2nd highest to highest calculated. Else: Lowest to 2nd lowest.
+        do
+            FinalPrices = Enumerable.Range(10, 90).Where(a => !GiftPrices.Contains(a)).ToArray().Shuffle().Take(6).ToArray();
+        while ((FinalPrices.Min() > GiftPrices[0] && FinalPrices.Min() < GiftPrices[1]) || (FinalPrices.Max() > GiftPrices[4] && FinalPrices.Max() < GiftPrices[5]));
+        /*for (int i = 0; i < 5; i++) {
             int temp = 0;
             do {
-            temp = Rnd.Range(10, 99);
+            temp = Rnd.Range(10, 100);
             } while (GiftPrices.Contains(temp) || (temp > GiftPrices[0] && temp < GiftPrices[1]) || (temp > GiftPrices[4] && temp < GiftPrices[5]) || FinalPrices.Contains(temp));
             FinalPrices[i] = temp;
         }
-
-        if (CeilOrFloor) {
-            FinalPrices[5] = Rnd.Range(GiftPrices[4] + 1, GiftPrices[5]);
-        }
-        else {
-            FinalPrices[5] = Rnd.Range(GiftPrices[0] + 1, GiftPrices[1]);
-        }
+        */
+        BubbleSort(FinalPrices);
+        if (FinalPrices.Count(a => CeilOrFloor ? a > targetPrice : a < targetPrice) != 1)
+            goto retryGen;
+        if (!CeilOrFloor)
+            FinalPrices = FinalPrices.Reverse().ToArray();
+        FinalPrices[5] = targetPrice;
 
         Debug.LogFormat("[Secret Santa #{0}] The solution price is ${1}.", ModuleId, FinalPrices[5]);
 
@@ -462,21 +467,32 @@ public class SecretSanta : MonoBehaviour {
     #endregion
 
 #pragma warning disable 414
-    private readonly string TwitchHelpMessage = "Use \"!{0} TL\" to press the top-left gift. Possible gifts are ML, TL, TR, MR, BR, BL. Use \"!{0} submit\" to submit your selection.";
+    private readonly string TwitchHelpMessage = "Use \"!{0} TL\" to press the top-left gift. Possible gifts are ML, TL, TR, MR, BR, BL. Use \"!{0} submit\" to submit your selection. Use \"!{0} shake\" to shake the present selected, in a case where turning the bomb is not cooperating.";
 #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand (string Command) {
         Command = Command.Trim().ToUpperInvariant();
-        yield return null;
-        if (!Positions.Contains(Command) && Command != "SUBMIT") {
+        if (!Positions.Contains(Command) && Command != "SUBMIT" && Command != "SHAKE") {
             yield return "sendtochaterror I don't understand!";
         }
         else {
+            yield return null;
             if (Positions.Contains(Command)) {
-            Gifts[Array.IndexOf(Positions, Command)].OnInteract();
+                Gifts[Array.IndexOf(Positions, Command)].OnInteract();
             }
-            else {
-            Sumbit.OnInteract();
+            else if (Command == "SUBMIT") {
+                Sumbit.OnInteract();
+            }
+            else
+            {
+                if (GiftThatWillSound != null)
+                {
+                    while (IsPlaying)
+                        yield return "trycancel";
+                    StartCoroutine(PlayGiftSound());
+                }
+                else
+                    yield return "sendtochaterror There is no sound playing! Did you select a present?";
             }
         }
     }
